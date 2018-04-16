@@ -85,14 +85,33 @@ class AnalisadorLexico:
 						i += 2
 					# nao fechar '
 					elif linha[i+1] == "\n" or not "\'" in linha[i+1:]:
-						sys.stderr.write("Error lexico - faltou fechar aspas - linha:%s\n" % str(n_linha))
+						sys.stderr.write("Error lexico - faltou fechar aspas simples - linha:%s\n" % str(n_linha))
 						sys.exit(1)
 					else:
 						sys.stderr.write("Error lexico - tamanho ou caracter invalido - linha:%s\n" % str(n_linha))
 						sys.exit(1)						
 				#verifica string
 				elif caracter_atual == "\"":
-					pass
+					i += 1
+					valido = True
+
+					if linha[i:].find("\"") == -1:
+						sys.stderr.write("Error lexico - faltou fechar aspas duplas - linha:%s\n" % str(n_linha))
+						sys.exit(1)
+					else:
+						fim_string = i+linha[i:].find("\"")
+						string = linha[i:fim_string]
+						i = fim_string
+						for s in string:
+							if not self.e_simbolo(s):
+								valido = False
+								sys.stderr.write("Error lexico - string invalida - linha:%s\n" % str(n_linha))
+								sys.exit(1)	
+						if valido:
+							id += 1
+							token = (string, id)
+							self.tab_simbs.append([id, string, "string"])
+							self.tokens.append(token)						
 				#verificando numeros
 				elif self.e_digito(caracter_atual):
 					pass
