@@ -94,6 +94,7 @@ class AnalisadorLexico:
 				elif caracter_atual == "\"":
 					i += 1
 					valido = True
+
 					#nao encontrou " fechando
 					if linha[i:].find("\"") == -1:
 						sys.stderr.write("Error lexico: faltou fechar aspas duplas, linha:%s\n" % str(n_linha))
