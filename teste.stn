@@ -1,7 +1,9 @@
 // comentario
-{
-( ++ )
-'a'
-"asd"
-int x = 123.2;
+public class Animalia {
+	public static void main(String[] args) {
+	FruitFly fruitFly = new FruitFly();
+	Tiger tiger = new Tiger();
+	System.out.println(fruitFly.scientificName());
+	System.out.println(tiger.scientificName());
+	}
 }

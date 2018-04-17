@@ -2,7 +2,7 @@
 
 import string
 import sys
-import re
+import numpy as np
 
 class AnalisadorLexico:
 
@@ -31,7 +31,7 @@ class AnalisadorLexico:
 		return False
 
 	def e_letra(self, caracter):
-		if caracter in string.ascii_letters:
+		if caracter in string.ascii_letters or caracter in "_":
 			return True
 		return False
 
@@ -133,7 +133,37 @@ class AnalisadorLexico:
 						self.tokens.append(token)
 				# verificando identificadores e reservadas
 				elif self.e_letra(caracter_atual):
-					pass
+					ident = caracter_atual
+					i += 1
+					while i < tam_linha:
+						caracter_atual = linha[i]
+
+						if self.e_letra(caracter_atual) or self.e_digito(caracter_atual):
+							ident += caracter_atual
+						elif self.e_separador(caracter_atual) or caracter_atual == " " or caracter_atual == "\t":
+							i -= 1
+							break
+						elif self.e_operador(caracter_atual):
+							i -= 1
+							break
+						i += 1
+
+					if self.e_reservada(ident):
+						token = (ident)
+						self.tokens.append(token)
+					else:
+						flag = False
+						# se o identificador ja tiver na tab simb, utilizar msm id
+						for x in self.tab_simbs:
+							if ident in x:
+								self.tab_simbs.append([x[0], ident, "tipo"])
+								flag = True
+								break
+						if not flag:	
+							id += 1
+							token = (ident, id)
+							self.tab_simbs.append([id, ident, "tipo"])
+							self.tokens.append(token)
 
 				# incrementa leitura de caracter
 				i += 1
@@ -148,4 +178,4 @@ if __name__ == '__main__':
 	lexico = AnalisadorLexico()
 	lexico.analisador(arquivo)
 	print (lexico.tokens)
-	print (lexico.tab_simbs)
+	print (np.matrix(lexico.tab_simbs))
