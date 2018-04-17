@@ -48,10 +48,10 @@ class AnalisadorLexico:
 	def analisador(self, arquivo):
 		linha = arquivo.readline()
 		n_linha = 1
+		id = 0 # id tabela de simbolos
 
 		while linha:
 			i = 0 # ponteiro do arquivo 
-			id = 0 # id tabela de simbolos
 			tam_linha = len(linha)
 			while i < tam_linha:
 				caracter_atual = linha[i]
@@ -85,19 +85,19 @@ class AnalisadorLexico:
 						i += 2
 					# nao fechar '
 					elif linha[i+1] == "\n" or not "\'" in linha[i+1:]:
-						sys.stderr.write("Error lexico: faltou fechar aspas simples, linha:%s\n" % str(n_linha))
+						sys.stderr.write("Error lexico: faltou fechar aspas simples, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						sys.exit(1)
 					else:
-						sys.stderr.write("Error lexico: tamanho ou caracter invalido, linha:%s\n" % str(n_linha))
+						sys.stderr.write("Error lexico: tamanho ou caracter invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						sys.exit(1)						
 				#verifica string
 				elif caracter_atual == "\"":
 					i += 1
-					valido = True
+					flag = True
 
 					#nao encontrou " fechando
 					if linha[i:].find("\"") == -1:
-						sys.stderr.write("Error lexico: faltou fechar aspas duplas, linha:%s\n" % str(n_linha))
+						sys.stderr.write("Error lexico: faltou fechar aspas duplas, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						sys.exit(1)
 					else:
 						fim_string = i+linha[i:].find("\"")
@@ -105,18 +105,33 @@ class AnalisadorLexico:
 						i = fim_string
 						for s in string:
 							if not self.e_simbolo(s):
-								valido = False
-								sys.stderr.write("Error lexico: string invalida, linha:%s\n" % str(n_linha))
+								flag = False
+								sys.stderr.write("Error lexico: string invalida, linha:%s col:%s\n" % (str(n_linha), str(i)))
 								sys.exit(1)	
-						if valido:
+						if flag:
 							id += 1
 							token = (string, id)
 							self.tab_simbs.append([id, string, "string"])
 							self.tokens.append(token)						
 				#verificando numeros
 				elif self.e_digito(caracter_atual):
-					pass
-				# verificando identificadores
+					num = caracter_atual
+					i += 1
+					# percorre o caracter se for digito e se nao for final de linha
+					while self.e_digito(linha[i]) and i+1 < tam_linha:
+						num += linha[i] # agrupa os digitos
+						i += 1
+						caracter_atual = linha[i]
+					# deteccao de float
+					if caracter_atual == ".":
+						sys.stderr.write("Error lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
+						sys.exit(1)	
+					else:
+						id += 1
+						token = (num, id)
+						self.tab_simbs.append([id, num, "int"])
+						self.tokens.append(token)
+				# verificando identificadores e reservadas
 				elif self.e_letra(caracter_atual):
 					pass
 

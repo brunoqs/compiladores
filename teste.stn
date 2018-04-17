@@ -2,5 +2,6 @@
 {
 ( ++ )
 'a'
-"asdasdasd"
+"asd"
+int x = 123.2;
 }
