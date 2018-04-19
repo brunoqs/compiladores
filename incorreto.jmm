@@ -1,0 +1,18 @@
+package pass;
+
+public class Erro {
+	public int x = 100.0; // erro de float
+	String y = "asd; // erro aspas
+	String z = asd"; // erro string 
+	char w = 'ab'; // erro tamanho char
+	char w@ = 'a'; // erro identificador
+
+	public Erro(int x, String y, String z, char w){
+
+	}
+
+	public static void main(String[] args) {
+
+	}
+}
+

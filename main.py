@@ -63,7 +63,7 @@ class AnalisadorLexico:
 
 				#armazena separador no token
 				if self.e_separador(caracter_atual):
-					if self.e_digito(caracter_seguinte):
+					if caracter_atual == "." and self.e_digito(caracter_seguinte):
 						sys.stderr.write("Error lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						sys.exit(1)	
 					else:	
@@ -119,10 +119,15 @@ class AnalisadorLexico:
 					num = caracter_atual
 					i += 1
 					# percorre o caracter se for digito e se nao for final de linha
-					while self.e_digito(linha[i]) and i+1 < tam_linha:
-						num += linha[i] # agrupa os digitos
-						i += 1
+					while i < tam_linha:
 						caracter_atual = linha[i]
+						if self.e_digito(caracter_atual):
+							num += linha[i] # agrupa os digitos
+						else:
+							i -= 1
+							break
+						i += 1
+
 					# deteccao de float
 					if linha[i] == ".":
 						sys.stderr.write("Error lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
@@ -147,6 +152,9 @@ class AnalisadorLexico:
 						elif self.e_operador(caracter_atual):
 							i -= 1
 							break
+						elif caracter_atual != "\n":
+							sys.stderr.write("Error lexico: identificador invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
+							sys.exit(1)
 						i += 1
 
 					if self.e_reservada(ident):
@@ -157,7 +165,9 @@ class AnalisadorLexico:
 						# se o identificador ja tiver na tab simb, utilizar msm id
 						for x in self.tab_simbs:
 							if ident in x:
+								token = (ident, x[0])
 								self.tab_simbs.append([x[0], ident, "tipo"])
+								self.tokens.append(token)
 								flag = True
 								break
 						if not flag:	
@@ -165,6 +175,9 @@ class AnalisadorLexico:
 							token = (ident, id)
 							self.tab_simbs.append([id, ident, "tipo"])
 							self.tokens.append(token)
+				elif caracter_atual != "\n" and caracter_atual != " " and caracter_atual != "\t":
+					sys.stderr.write("Error lexico: tamanho ou caracter invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
+					sys.exit(1)	
 
 				# incrementa leitura de caracter
 				i += 1
@@ -178,5 +191,5 @@ if __name__ == '__main__':
 
 	lexico = AnalisadorLexico()
 	lexico.analisador(arquivo)
-	print (lexico.tokens)
+	print(*lexico.tokens, sep = "\n")
 	print (np.matrix(lexico.tab_simbs))
