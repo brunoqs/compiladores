@@ -63,7 +63,11 @@ class AnalisadorLexico:
 
 				#armazena separador no token
 				if self.e_separador(caracter_atual):
-					self.tokens.append(caracter_atual)
+					if self.e_digito(caracter_seguinte):
+						sys.stderr.write("Error lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
+						sys.exit(1)	
+					else:	
+						self.tokens.append(caracter_atual)
 				#ignora comentario
 				elif caracter_atual == "/" and caracter_seguinte == "/":
 					i = tam_linha
@@ -93,7 +97,6 @@ class AnalisadorLexico:
 				#verifica string
 				elif caracter_atual == "\"":
 					i += 1
-					flag = True
 
 					#nao encontrou " fechando
 					if linha[i:].find("\"") == -1:
@@ -105,14 +108,12 @@ class AnalisadorLexico:
 						i = fim_string
 						for s in string:
 							if not self.e_simbolo(s):
-								flag = False
 								sys.stderr.write("Error lexico: string invalida, linha:%s col:%s\n" % (str(n_linha), str(i)))
 								sys.exit(1)	
-						if flag:
-							id += 1
-							token = (string, id)
-							self.tab_simbs.append([id, string, "string"])
-							self.tokens.append(token)						
+						id += 1
+						token = (string, id)
+						self.tab_simbs.append([id, string, "string"])
+						self.tokens.append(token)						
 				#verificando numeros
 				elif self.e_digito(caracter_atual):
 					num = caracter_atual
@@ -123,7 +124,7 @@ class AnalisadorLexico:
 						i += 1
 						caracter_atual = linha[i]
 					# deteccao de float
-					if caracter_atual == ".":
+					if linha[i] == ".":
 						sys.stderr.write("Error lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						sys.exit(1)	
 					else:
