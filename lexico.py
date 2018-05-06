@@ -4,7 +4,7 @@ import string
 import sys
 import numpy as np
 
-class AnalisadorLexico:
+class AnalisadorLexico(object):
 
 	def __init__(self):
 		self.tokens = []
@@ -65,7 +65,11 @@ class AnalisadorLexico:
 				if self.e_separador(caracter_atual):
 					if caracter_atual == "." and self.e_digito(caracter_seguinte):
 						sys.stderr.write("Error lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
-						sys.exit(1)	
+						while self.e_digito(caracter_seguinte):
+							i += 1
+							caracter_seguinte = linha[i]
+							if not self.e_digito(caracter_seguinte):
+								i -= 1
 					else:	
 						self.tokens.append(caracter_atual)
 				#ignora comentario
@@ -90,10 +94,10 @@ class AnalisadorLexico:
 					# nao fechar '
 					elif linha[i+1] == "\n" or not "\'" in linha[i+1:]:
 						sys.stderr.write("Error lexico: faltou fechar aspas simples, linha:%s col:%s\n" % (str(n_linha), str(i)))
-						sys.exit(1)
+						i = tam_linha
 					else:
 						sys.stderr.write("Error lexico: tamanho ou caracter invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
-						sys.exit(1)						
+						i = linha.find("\'") + linha[i+1:].find("\'")+1	
 				#verifica string
 				elif caracter_atual == "\"":
 					i += 1
@@ -101,19 +105,22 @@ class AnalisadorLexico:
 					#nao encontrou " fechando
 					if linha[i:].find("\"") == -1:
 						sys.stderr.write("Error lexico: faltou fechar aspas duplas, linha:%s col:%s\n" % (str(n_linha), str(i)))
-						sys.exit(1)
+						i = tam_linha
 					else:
+						flag = False
 						fim_string = i+linha[i:].find("\"")
 						string = linha[i:fim_string]
 						i = fim_string
 						for s in string:
 							if not self.e_simbolo(s):
+								flag = True
 								sys.stderr.write("Error lexico: string invalida, linha:%s col:%s\n" % (str(n_linha), str(i)))
-								sys.exit(1)	
-						id += 1
-						token = (string, id)
-						self.tab_simbs.append([id, string, "string"])
-						self.tokens.append(token)						
+								break
+						if not flag:
+							id += 1
+							token = (string, id)
+							self.tab_simbs.append([id, string, "string"])
+							self.tokens.append(token)						
 				#verificando numeros
 				elif self.e_digito(caracter_atual):
 					num = caracter_atual
@@ -129,7 +136,7 @@ class AnalisadorLexico:
 						i += 1
 
 					# deteccao de float
-					if linha[i] == ".":
+					if linha[i] == ".": # codigo n entra aq
 						sys.stderr.write("Error lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						sys.exit(1)	
 					else:
@@ -139,6 +146,7 @@ class AnalisadorLexico:
 						self.tokens.append(token)
 				# verificando identificadores e reservadas
 				elif self.e_letra(caracter_atual):
+					erro = False
 					ident = caracter_atual
 					i += 1
 					while i < tam_linha:
@@ -154,27 +162,30 @@ class AnalisadorLexico:
 							break
 						elif caracter_atual != "\n":
 							sys.stderr.write("Error lexico: identificador invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
-							sys.exit(1)
+							erro = True
 						i += 1
 
-					if self.e_reservada(ident):
-						token = (ident)
-						self.tokens.append(token)
+					if erro:
+						pass 
 					else:
-						flag = False
-						# se o identificador ja tiver na tab simb, utilizar msm id
-						for x in self.tab_simbs:
-							if ident in x:
-								token = (ident, x[0])
-								self.tab_simbs.append([x[0], ident, "tipo"])
-								self.tokens.append(token)
-								flag = True
-								break
-						if not flag:	
-							id += 1
-							token = (ident, id)
-							self.tab_simbs.append([id, ident, "tipo"])
+						if self.e_reservada(ident):
+							token = (ident)
 							self.tokens.append(token)
+						else:
+							flag = False
+							# se o identificador ja tiver na tab simb, utilizar msm id
+							for x in self.tab_simbs:
+								if ident in x:
+									token = (ident, x[0])
+									self.tab_simbs.append([x[0], ident, "tipo"])
+									self.tokens.append(token)
+									flag = True
+									break
+							if not flag:	
+								id += 1
+								token = (ident, id)
+								self.tab_simbs.append([id, ident, "tipo"])
+								self.tokens.append(token)
 				elif caracter_atual != "\n" and caracter_atual != " " and caracter_atual != "\t":
 					sys.stderr.write("Error lexico: tamanho ou caracter invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 					sys.exit(1)	
@@ -185,11 +196,11 @@ class AnalisadorLexico:
 			linha = arquivo.readline()
 			n_linha += 1
 
-if __name__ == '__main__':
+'''if __name__ == '__main__':
 	nome_arquivo = sys.argv[1]
 	arquivo = open(nome_arquivo, "r")
 
 	lexico = AnalisadorLexico()
 	lexico.analisador(arquivo)
 	print(*lexico.tokens, sep = "\n")
-	print (np.matrix(lexico.tab_simbs))
+	print (np.matrix(lexico.tab_simbs))'''

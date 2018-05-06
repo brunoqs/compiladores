@@ -2,10 +2,11 @@ package pass;
 
 public class Erro {
 	public int x = 100.0; // erro de float
+	char w = 'ab'; // erro tamanho char
+	char w = 'a;
 	String y = "asd; // erro aspas
 	String z = asd"; // erro string 
-	char w = 'ab'; // erro tamanho char
-	char w@ = 'a'; // erro identificador
+	char w@aaa = 'a'; // erro identificador
 
 	public Erro(int x, String y, String z, char w){
 
