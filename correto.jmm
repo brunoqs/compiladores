@@ -3,7 +3,7 @@ import java.lang.Integer;
 import java.lang.System;
 
 public class Series {
-	public static int ARITHMETIC 100.0;
+	public static int ARITHMETIC = 100.0;
 	public static int GEOMETRIC = 2;
 	private int a; // first term
 	private int d; // common sum or multiple

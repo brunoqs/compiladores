@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
 
+#A estrutura token contem a linha e a coluna do token capturado, ex:
+# apos ´ tem a linha e apos | tem a coluna
+# {´5|5
+
+#Caso o token seja um identificador, um numero, um char ou uma string será respresentado como o ex, respectivamente:
+# id_nomevariavel´1|2
+# num_12321´5|6
+# ch_a´1|2
+# str_ola´1|2
+
 import string
 import sys
 import numpy as np
@@ -13,7 +23,7 @@ class AnalisadorLexico(object):
 		 "null", "return", "void", "class", "if", "package", "static", "while", "else", "instanceof", "private", "super"]
 		self.operadores = ["=", "==", ">", "++", "&&", "<=", "!", "-", "--", "+", "+=", "*"]
 		self.separadores = [",", ".", "[", "{", "(", ")", "}", "]", ";"]
-		self.simbolos = ''' !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHJKLMNOPQRSTUVXWYZ[\]^_`abcdefghijklmnopqrstuvxwyz{|}~'''
+		self.simbolos = ''' !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHJKLMNOPQRSTUVXWYZ[\]^_`abcdefghijklmnopqrstuvxwyz}{~'''
 
 	def e_reservada(self, palavra):
 		if palavra in self.reservadas:
@@ -48,7 +58,6 @@ class AnalisadorLexico(object):
 	def analisador(self, arquivo):
 		linha = arquivo.readline()
 		n_linha = 1
-		id = 0 # id tabela de simbolos
 
 		while linha:
 			i = 0 # ponteiro do arquivo 
@@ -64,39 +73,37 @@ class AnalisadorLexico(object):
 				#armazena separador no token
 				if self.e_separador(caracter_atual):
 					if caracter_atual == "." and self.e_digito(caracter_seguinte):
-						sys.stderr.write("Error lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
+						sys.stderr.write("Erro lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						while self.e_digito(caracter_seguinte):
 							i += 1
 							caracter_seguinte = linha[i]
 							if not self.e_digito(caracter_seguinte):
 								i -= 1
-					else:	
-						self.tokens.append(caracter_atual)
+					else:
+						self.tokens.append(caracter_atual+"´"+str(n_linha)+"|"+str(i))
 				#ignora comentario
 				elif caracter_atual == "/" and caracter_seguinte == "/":
 					i = tam_linha
 				#armazena operador de 2 simbolo no token
 				elif caracter_seguinte != None and self.e_operador(caracter_atual+caracter_seguinte):
-					self.tokens.append(caracter_atual+caracter_seguinte)
+					self.tokens.append(caracter_atual+caracter_seguinte+"´"+str(n_linha)+"|"+str(i))
 					i += 1 
 				#armazena operador de 1 simbolo no token
 				elif self.e_operador(caracter_atual):
-					self.tokens.append(caracter_atual)
+					self.tokens.append(caracter_atual+"´"+str(n_linha)+"|"+str(i))
 				#verifica char
 				elif caracter_atual == "\'":
 					# encontrou caracter
 					if self.e_simbolo(linha[i+1]) and linha[i+1] != "\'" and linha[i+2] == "\'":
-						id += 1
-						token = (linha[i+1], id)
-						self.tab_simbs.append([id, linha[i+1], "char"])
-						self.tokens.append(token)
+						self.tab_simbs.append(['ch', linha[i+1], "char"])
+						self.tokens.append('ch_'+linha[i+1]+"´"+str(n_linha)+"|"+str(i))
 						i += 2
 					# nao fechar '
 					elif linha[i+1] == "\n" or not "\'" in linha[i+1:]:
-						sys.stderr.write("Error lexico: faltou fechar aspas simples, linha:%s col:%s\n" % (str(n_linha), str(i)))
+						sys.stderr.write("Erro lexico: faltou fechar aspas simples, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						i = tam_linha
 					else:
-						sys.stderr.write("Error lexico: tamanho ou caracter invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
+						sys.stderr.write("Erro lexico: tamanho ou caracter invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						i = linha.find("\'") + linha[i+1:].find("\'")+1	
 				#verifica string
 				elif caracter_atual == "\"":
@@ -104,7 +111,7 @@ class AnalisadorLexico(object):
 
 					#nao encontrou " fechando
 					if linha[i:].find("\"") == -1:
-						sys.stderr.write("Error lexico: faltou fechar aspas duplas, linha:%s col:%s\n" % (str(n_linha), str(i)))
+						sys.stderr.write("Erro lexico: faltou fechar aspas duplas, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						i = tam_linha
 					else:
 						flag = False
@@ -114,13 +121,11 @@ class AnalisadorLexico(object):
 						for s in string:
 							if not self.e_simbolo(s):
 								flag = True
-								sys.stderr.write("Error lexico: string invalida, linha:%s col:%s\n" % (str(n_linha), str(i)))
+								sys.stderr.write("Erro lexico: string invalida, linha:%s col:%s\n" % (str(n_linha), str(i)))
 								break
 						if not flag:
-							id += 1
-							token = (string, id)
-							self.tab_simbs.append([id, string, "string"])
-							self.tokens.append(token)						
+							self.tab_simbs.append(['str', string, "string"])
+							self.tokens.append('str_'+string+"´"+str(n_linha)+"|"+str(i))						
 				#verificando numeros
 				elif self.e_digito(caracter_atual):
 					num = caracter_atual
@@ -137,13 +142,11 @@ class AnalisadorLexico(object):
 
 					# deteccao de float
 					if linha[i] == ".": # codigo n entra aq
-						sys.stderr.write("Error lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
+						sys.stderr.write("Erro lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						sys.exit(1)	
 					else:
-						id += 1
-						token = (num, id)
-						self.tab_simbs.append([id, num, "int"])
-						self.tokens.append(token)
+						self.tab_simbs.append(['num', num, "int"])
+						self.tokens.append("num_"+num+"´"+str(n_linha)+"|"+str(i))
 				# verificando identificadores e reservadas
 				elif self.e_letra(caracter_atual):
 					erro = False
@@ -161,7 +164,7 @@ class AnalisadorLexico(object):
 							i -= 1
 							break
 						elif caracter_atual != "\n":
-							sys.stderr.write("Error lexico: identificador invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
+							sys.stderr.write("Erro lexico: identificador invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 							erro = True
 						i += 1
 
@@ -169,25 +172,12 @@ class AnalisadorLexico(object):
 						pass 
 					else:
 						if self.e_reservada(ident):
-							token = (ident)
-							self.tokens.append(token)
+							self.tokens.append(ident+"´"+str(n_linha)+"|"+str(i))
 						else:
-							flag = False
-							# se o identificador ja tiver na tab simb, utilizar msm id
-							for x in self.tab_simbs:
-								if ident in x:
-									token = (ident, x[0])
-									self.tab_simbs.append([x[0], ident, "tipo"])
-									self.tokens.append(token)
-									flag = True
-									break
-							if not flag:	
-								id += 1
-								token = (ident, id)
-								self.tab_simbs.append([id, ident, "tipo"])
-								self.tokens.append(token)
+							self.tab_simbs.append(['id', ident, "tipo"])
+							self.tokens.append('id_'+ident+"´"+str(n_linha)+"|"+str(i))
 				elif caracter_atual != "\n" and caracter_atual != " " and caracter_atual != "\t":
-					sys.stderr.write("Error lexico: tamanho ou caracter invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
+					sys.stderr.write("Erro lexico: tamanho ou caracter invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 					sys.exit(1)	
 
 				# incrementa leitura de caracter
@@ -195,12 +185,3 @@ class AnalisadorLexico(object):
 
 			linha = arquivo.readline()
 			n_linha += 1
-
-'''if __name__ == '__main__':
-	nome_arquivo = sys.argv[1]
-	arquivo = open(nome_arquivo, "r")
-
-	lexico = AnalisadorLexico()
-	lexico.analisador(arquivo)
-	print(*lexico.tokens, sep = "\n")
-	print (np.matrix(lexico.tab_simbs))'''
