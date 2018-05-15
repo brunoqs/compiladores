@@ -1,5 +1,11 @@
 package pass;
 
+import a.oi;
+import b;
+import c;
+import d;
+import e;
+
 public class Erro {
 	public int x = 100.0; // erro de float
 	char w = 'ab'; // erro tamanho char
