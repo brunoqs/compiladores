@@ -58,6 +58,7 @@ class AnalisadorLexico(object):
 	def analisador(self, arquivo):
 		linha = arquivo.readline()
 		n_linha = 1
+		id = 0 # id tabela de simbolos
 
 		while linha:
 			i = 0 # ponteiro do arquivo 
@@ -95,8 +96,9 @@ class AnalisadorLexico(object):
 				elif caracter_atual == "\'":
 					# encontrou caracter
 					if self.e_simbolo(linha[i+1]) and linha[i+1] != "\'" and linha[i+2] == "\'":
-						self.tab_simbs.append(['ch', linha[i+1], "char"])
-						self.tokens.append('ch_'+linha[i+1]+"´"+str(n_linha)+"|"+str(i))
+						id += 1
+						self.tab_simbs.append(["ch"+str(id), linha[i+1], "char"])
+						self.tokens.append("ch"+str(id)+"_"+linha[i+1]+"´"+str(n_linha)+"|"+str(i))
 						i += 2
 					# nao fechar '
 					elif linha[i+1] == "\n" or not "\'" in linha[i+1:]:
@@ -124,8 +126,9 @@ class AnalisadorLexico(object):
 								sys.stderr.write("Erro lexico: string invalida, linha:%s col:%s\n" % (str(n_linha), str(i)))
 								break
 						if not flag:
-							self.tab_simbs.append(['str', string, "string"])
-							self.tokens.append('str_'+string+"´"+str(n_linha)+"|"+str(i))						
+							id += 1
+							self.tab_simbs.append(["str"+str(id), string, "string"])
+							self.tokens.append("str"+str(id)+"_"+string+"´"+str(n_linha)+"|"+str(i))						
 				#verificando numeros
 				elif self.e_digito(caracter_atual):
 					num = caracter_atual
@@ -145,8 +148,9 @@ class AnalisadorLexico(object):
 						sys.stderr.write("Erro lexico: float nao e permitido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 						sys.exit(1)	
 					else:
-						self.tab_simbs.append(['num', num, "int"])
-						self.tokens.append("num_"+num+"´"+str(n_linha)+"|"+str(i))
+						id += 1
+						self.tab_simbs.append(["num"+str(id), num, "int"])
+						self.tokens.append("num"+str(id)+"_"+num+"´"+str(n_linha)+"|"+str(i))
 				# verificando identificadores e reservadas
 				elif self.e_letra(caracter_atual):
 					erro = False
@@ -174,8 +178,9 @@ class AnalisadorLexico(object):
 						if self.e_reservada(ident):
 							self.tokens.append(ident+"´"+str(n_linha)+"|"+str(i))
 						else:
-							self.tab_simbs.append(['id', ident, "tipo"])
-							self.tokens.append('id_'+ident+"´"+str(n_linha)+"|"+str(i))
+							id += 1
+							self.tab_simbs.append(["id"+str(id), ident, "tipo"])
+							self.tokens.append("id"+str(id)+"_"+ident+"´"+str(n_linha)+"|"+str(i))
 				elif caracter_atual != "\n" and caracter_atual != " " and caracter_atual != "\t":
 					sys.stderr.write("Erro lexico: tamanho ou caracter invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
 					sys.exit(1)	

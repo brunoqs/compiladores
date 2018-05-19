@@ -1,12 +1,13 @@
-package pass;
+package pass.a.;
 
-import a.oi;
-import b;
-import c;
-import d;
-import e;
+import a.oi.;
 
 public class Erro {
+	
+	public Erro (int x, cha y, ) {
+
+	}
+
 	public int x = 100.0; // erro de float
 	char w = 'ab'; // erro tamanho char
 	char w = 'a;
