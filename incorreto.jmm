@@ -1,11 +1,22 @@
-package pass.a.;
+package pass;
 
-import a.oi.;
+import a.oi;
 
-public class Erro {
-	
-	public Erro (int x, cha y, ) {
+private class Erro {
 
+	public int x = 1, k = 2, y = 3;
+
+	public void computeSum(int kind) {
+		int sum;
+		while (i-- > 1) {
+			if (kind == ARITHMETIC) {
+				t += d;
+			} else if (kind == GEOMETRIC) {
+				t = t * d;
+			}
+			sum += t;
+		}
+		return sum;
 	}
 
 	public int x = 100.0; // erro de float
@@ -15,9 +26,7 @@ public class Erro {
 	String z = asd"; // erro string 
 	char w@aaa = 'a'; // erro identificador
 
-	public Erro(int x, String y, String z, char w){
 
-	}
 
 	public static void main(String[] args) {
 

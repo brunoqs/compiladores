@@ -275,18 +275,26 @@ class AnalisadorSintatico(AnalisadorLexico):
 		return tipo
 
 
-	# block ::= { {blockStatement} }
+	# block ::= { {blockStatement} } obs: falta fazer o loop
 	def block(self):
 		if "{" in self.tokens[self.i]:
 			self.prox_token()
-			self.block_statement()
+			while "}" not in self.tokens[self.i]:
+				self.block_statement()
+			if "}" in self.tokens[self.i]:
+				self.prox_token()
+			else:
+				sys.stderr.write("Erro sintatico: faltou }, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))	
 		else:
 			sys.stderr.write("Erro sintatico: faltou {, linha:%s col:%s\n" % (str(self.linha), str(self.coluna))) 
 
 
 	# blockStatement ::= localVariableDeclarationStatement | statement
 	def block_statement(self):
-		self.local_variable_declatarion_statement()
+		if ("int" in self.tokens[self.i]) or ("char" in self.tokens[self.i]) or ("boolean" in self.tokens[self.i]):
+			self.local_variable_declatarion_statement()
+		else:
+			self.statement()
 
 	# localVariableDeclarationStatement ::= type variableDeclarators ;
 	def local_variable_declatarion_statement(self):
@@ -297,7 +305,7 @@ class AnalisadorSintatico(AnalisadorLexico):
 		else:
 			sys.stderr.write("Erro sintatico: faltando ;, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
 
-	# variableDeclarators ::= variableDeclarator {, variableDeclarator}
+	# variableDeclarators ::= variableDeclarator {, variableDeclarator} obs: falta errors
 	def variable_declarators(self, tipo):
 		self.variable_declarator(tipo)
 		if "," in self.tokens[self.i]:
@@ -308,7 +316,7 @@ class AnalisadorSintatico(AnalisadorLexico):
 				else:
 					break
 
-	# variableDeclarator ::= <identifier> [= variableInitializer] obs:falta continuar aq
+	# variableDeclarator ::= <identifier> [= variableInitializer] obs: falta errors
 	def variable_declarator(self, tipo):
 		if "id" in self.tokens[self.i] and "_" in self.tokens[self.i]:
 			id = self.conteudo_id()
@@ -316,18 +324,184 @@ class AnalisadorSintatico(AnalisadorLexico):
 			self.prox_token()
 			if "=" in self.tokens[self.i]:
 				self.prox_token()
+				inicial = self.variable_initializer(tipo)
+				id = self.conteudo_id()
+				self.add_tab_simbs(id, inicial)
 
 	# variableInitializer ::= arrayInitializer | expression
-	def variable_initializer(self):
-		pass
+	def variable_initializer(self, tipo):
+		if "{" in self.tokens[self.i]:
+			self.prox_token()
+			self.array_initializer(tipo)
+		else:
+			return self.expression()
 
-	# arrayInitializer ::= { [variableInitializer {, variableInitializer}] }
-	def array_initializer(self):
-		pass 
+	# arrayInitializer ::= { [variableInitializer {, variableInitializer}] } obs: falta errors
+	def array_initializer(self, tipo):
+		 if "}" in self.tokens[self.i]:
+		 	self.prox_token()
+		 else:
+		 	while True:
+		 		if ("num" or "id") and "_" in self.tokens[self.i]:
+		 			id = self.conteudo_id()
+		 			self.add_tab_simbs(id, tipo)
+		 			self.prox_token()
+		 		elif "," in self.tokens[self.i]:
+		 			self.prox_token()
+		 		elif "}" in self.tokens[self.i]:
+		 			self.prox_token()
+		 			break
 
 	# expression ::= assignmentExpression
 	def expression(self):
+		return self.assignment_expression()
+
+	'''assignmentExpression ::= conditionalAndExpression // must be a valid lhs
+						[(= | +=) assignmentExpression] '''
+	def assignment_expression(self):
+		lhs = self.conditional_and_expression()
+		return lhs
+
+	'''conditionalAndExpression ::= equalityExpression // level 10
+							{&& equalityExpression} '''
+	def conditional_and_expression(self):
+		lhs = self.equality_expression()
+		return lhs
+
+	'''equalityExpression ::= relationalExpression // level 6
+						{== relationalExpression} '''
+	def equality_expression(self):
+		lhs = self.relational_expression()
+		return lhs
+
+	'''relationalExpression ::= additiveExpression // level 5
+						[(> | <=) additiveExpression | instanceof referenceType] '''
+	def relational_expression(self):
+		lhs = self.additive_expression()
+		return lhs
+
+	'''additiveExpression ::= multiplicativeExpression // level 3
+						{(+ | -) multiplicativeExpression} '''
+	def additive_expression(self):
+		lhs = self.multiplicative_expression()
+		return lhs
+
+	''' multiplicativeExpression ::= unaryExpression // level 2
+							{* unaryExpression}''' 
+	def multiplicative_expression(self):
+		lhs = self.unary_expression()
+		return lhs 
+
+	''' unaryExpression ::= ++ unaryExpression // level 1
+					| - unaryExpression
+					| simpleUnaryExpression obs:falta implementacao''' 
+	def unary_expression(self):
+		if "++" in self.tokens[self.i]:
+			self.prox_token()
+		elif "-" in self.tokens[self.i]:
+			self.prox_token()
+		else:
+			return self.simple_unary_expression()
+
+	''' simpleUnaryExpression ::= ! unaryExpression
+						| ( basicType ) unaryExpression //cast
+						| ( referenceType ) simpleUnaryExpression // cast
+						| postfixExpression obs:falta implementacao'''
+	def simple_unary_expression(self):
+		if "!" in self.tokens[self.i]:
+			self.prox_token()
+		else:
+			return self.postfix_expression()
+
+	# postfixExpression ::= primary {selector} {--} obs:falta implementacao
+	def postfix_expression(self):
+		primary = self.primary()
+		self.selector()
+		return primary
+
+
+	''' primary ::= parExpression
+			| this [arguments]
+			| super (arguments | . <identifier> [arguments])
+			| literal
+			| new creator
+			| qualifiedIdentifier [arguments] obs:falta implementacao''' 
+	def primary(self):
+		if "(" in self.tokens[self.i]:
+			self.par_expression()
+		elif "this" in self.tokens[self.i]:
+			self.prox_token()
+			if "(" in self.tokens[self.i]:
+				self.arguments()
+		elif "super" in self.tokens[self.i]:
+			pass
+		elif "new" in self.tokens[self.i]:
+			self.creator()
+		elif "id" in self.tokens[self.i] and "_" in self.tokens[self.i]:
+			pass
+		else:
+			return self.literal()
+
+	# parExpression ::= ( expression )
+	def par_expression(self):
 		pass 
+
+	# arguments ::= ( [expression {, expression}] )
+	def arguments(self):
+		if "(" in self.tokens[self.i] and ")" in self.tokens[self.i+1]:
+			self.prox_token()
+			self.prox_token()
+			return 
+		else: # implementar
+			self.prox_token()
+			exp = self.expression()
+			id = self.conteudo_id()
+			self.add_tab_simbs(id, exp)
+			if "," in self.tokens[self.i]:
+				while True:
+					if "," in self.tokens[self.i]:
+						self.prox_token()
+
+
+
+	# literal ::= <int_literal> | <char_literal> | <string_literal> | true | false | null
+	def literal(self):
+		if "num" in self.tokens[self.i] and "_" in self.tokens[self.i]:
+			self.prox_token()
+			return "int"
+		elif "ch" in self.tokens[self.i] and "_" in self.tokens[self.i]:
+			self.prox_token()
+			return "char"
+		elif "str" in self.tokens[self.i] and "_" in self.tokens[self.i]:
+			self.prox_token()
+			return "String"
+		elif "true" in self.tokens[self.i]:
+			self.prox_token()
+			return "true"
+		elif "false" in self.tokens[self.i]:
+			self.prox_token()
+			return "false"
+		elif "null" in self.tokens[self.i]:
+			self.prox_token()
+			return "null"
+
+
+	''' creator ::= (basicType | qualifiedIdentifier)
+			( arguments
+			| [ ] {[ ]} [arrayInitializer]
+			| newArrayDeclarator '''
+	def creator(self):
+		pass
+
+	# newArrayDeclarator ::= [ expression ] {[ expression ]} {[ ]}
+	def new_array_declarator(self):
+		pass
+
+	# selector ::= . qualifiedIdentifier [arguments] | [ expression ]
+	def selector(self):
+		if "." in self.tokens[self.i]:
+			self.prox_token()
+			self.qualified_identifier()
 
 	''' statement ::= block
 			| <identifier> : statement
@@ -337,4 +511,17 @@ class AnalisadorSintatico(AnalisadorLexico):
 			| ;
 			| statementExpression ; '''
 	def statement(self):
-		pass
+		if "while" in self.tokens[self.i]:
+			print("here")
+		elif "if" in self.tokens[self.i]:
+			pass
+		elif "return" in self.tokens[self.i]:
+			pass
+		elif ";" in self.tokens[self.i]:
+			self.prox_token()
+		else:
+			self.statement_expression()
+
+	# statementExpression ::= expression // but must have side-e↵ect, eg i++
+	def statement_expression(self):
+		self.expression()
