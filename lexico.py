@@ -182,8 +182,7 @@ class AnalisadorLexico(object):
 							self.tab_simbs.append(["id"+str(id), ident, "tipo"])
 							self.tokens.append("id"+str(id)+"_"+ident+"´"+str(n_linha)+"|"+str(i))
 				elif caracter_atual != "\n" and caracter_atual != " " and caracter_atual != "\t":
-					sys.stderr.write("Erro lexico: tamanho ou caracter invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))
-					sys.exit(1)	
+					sys.stderr.write("Erro lexico: tamanho ou caracter invalido, linha:%s col:%s\n" % (str(n_linha), str(i)))	
 
 				# incrementa leitura de caracter
 				i += 1

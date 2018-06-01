@@ -10,17 +10,17 @@ public class Series {
 	private int n; // number of terms
 
 	public Series() {
-		this();
+		
 	}
 
-	public Series(int a, int d, int n) {
-		this.a = a;
-		this.d = d;
-		this.n = n;
-	}
+	//public Series(int a, int d, int n) {
+	//	this.a = a;
+	//	this.d = d;
+	//	this.n = n;
+	//}
 
 	public int computeSum(int kind) {
-		int sum = a, t = a, i = n;
+		int sum = 1, t = 2, i = 3;
 		while (i-- > 1) {
 			if (kind == ARITHMETIC) {
 				t += d;
@@ -29,15 +29,12 @@ public class Series {
 			}
 			sum += t;
 		}
-		return sum;
+		return sum
 	}
 
-	public static void main(String[] args) {
-		int a = Integer.parseInt(args[0]);
-		int d = Integer.parseInt(args[1]);
-		int n = Integer.parseInt(args[2]);
-		Series s = new Series(a, d, n);
-		System.out.println("Arithmetic sum = " + s.computeSum(Series.ARITHMETIC));
-		System.out.println("Geometric sum = " + s.computeSum(Series.GEOMETRIC));
+	public static void main() {
+		int a = Integer.parseInt();
+		System.out.println();
+		System.out.println();
 	}
 }

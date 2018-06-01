@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from lexico import *
+import pdb
 
 '''TODO: Verificar questao da comparacao com id com o token 
 
@@ -150,7 +151,8 @@ class AnalisadorSintatico(AnalisadorLexico):
 				mods = self.modifiers()
 				self.member_decl(mods)
 			if "}" in self.tokens[self.i]:
-				self.prox_token()
+				#self.prox_token()
+				pass
 			else:
 				sys.stderr.write("Erro sintatico: faltou }, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))			
 		else:
@@ -360,46 +362,99 @@ class AnalisadorSintatico(AnalisadorLexico):
 						[(= | +=) assignmentExpression] '''
 	def assignment_expression(self):
 		lhs = self.conditional_and_expression()
+		flag = True
+		while flag:
+			if "=" in self.tokens[self.i]:
+				self.prox_token()
+				self.assignment_expression()
+			elif "+=" in self.tokens[self.i]:
+				self.prox_token()
+				self.assignment_expression()
+			else:
+				flag = False
 		return lhs
 
 	'''conditionalAndExpression ::= equalityExpression // level 10
 							{&& equalityExpression} '''
 	def conditional_and_expression(self):
 		lhs = self.equality_expression()
+		flag = True
+		while flag:
+			if "&&" in self.tokens[self.i]:
+				self.prox_token()
+				self.equality_expression()
+			else:
+				flag = False
 		return lhs
 
 	'''equalityExpression ::= relationalExpression // level 6
 						{== relationalExpression} '''
 	def equality_expression(self):
 		lhs = self.relational_expression()
+		flag = True
+		while flag:
+			if "==" in self.tokens[self.i]:
+				self.prox_token()
+				self.relational_expression()
+			else:
+				flag = False
 		return lhs
 
 	'''relationalExpression ::= additiveExpression // level 5
-						[(> | <=) additiveExpression | instanceof referenceType] '''
+						[(> | <=) additiveExpression | instanceof referenceType] obs:falta instanceof'''
 	def relational_expression(self):
 		lhs = self.additive_expression()
+		flag = True
+		while flag:
+			if ">" in self.tokens[self.i]:
+				self.prox_token()
+				self.additive_expression()
+			elif "<=" in self.tokens[self.i]:
+				self.prox_token()
+				self.additive_expression()
+			else:
+				flag = False
 		return lhs
 
 	'''additiveExpression ::= multiplicativeExpression // level 3
 						{(+ | -) multiplicativeExpression} '''
 	def additive_expression(self):
 		lhs = self.multiplicative_expression()
+		flag = True
+		while flag:
+			if "+" in self.tokens[self.i]:
+				self.prox_token()
+				self.unary_expression()
+			elif "-" in self.tokens[self.i]:
+				self.prox_token()
+				self.unary_expression()
+			else:
+				flag = False
 		return lhs
 
 	''' multiplicativeExpression ::= unaryExpression // level 2
 							{* unaryExpression}''' 
 	def multiplicative_expression(self):
 		lhs = self.unary_expression()
+		flag = True
+		while flag:
+			if "*" in self.tokens[self.i]:
+				self.prox_token()
+				self.unary_expression()
+			else:
+				flag = False
 		return lhs 
 
 	''' unaryExpression ::= ++ unaryExpression // level 1
 					| - unaryExpression
-					| simpleUnaryExpression obs:falta implementacao''' 
+					| simpleUnaryExpression ''' 
 	def unary_expression(self):
 		if "++" in self.tokens[self.i]:
 			self.prox_token()
+			self.unary_expression()
 		elif "-" in self.tokens[self.i]:
 			self.prox_token()
+			self.unary_expression()
 		else:
 			return self.simple_unary_expression()
 
@@ -410,13 +465,15 @@ class AnalisadorSintatico(AnalisadorLexico):
 	def simple_unary_expression(self):
 		if "!" in self.tokens[self.i]:
 			self.prox_token()
+			self.unary_expression()
 		else:
 			return self.postfix_expression()
 
 	# postfixExpression ::= primary {selector} {--} obs:falta implementacao
 	def postfix_expression(self):
 		primary = self.primary()
-		self.selector()
+		if "." in self.tokens[self.i]:
+			self.selector()
 		return primary
 
 
@@ -438,13 +495,17 @@ class AnalisadorSintatico(AnalisadorLexico):
 		elif "new" in self.tokens[self.i]:
 			self.creator()
 		elif "id" in self.tokens[self.i] and "_" in self.tokens[self.i]:
-			pass
+			self.qualified_identifier()
 		else:
 			return self.literal()
 
 	# parExpression ::= ( expression )
 	def par_expression(self):
-		pass 
+		if "(" in self.tokens[self.i]:
+			self.prox_token()
+			self.expression()
+			if ")" in self.tokens[self.i]:
+				self.prox_token()
 
 	# arguments ::= ( [expression {, expression}] )
 	def arguments(self):
@@ -485,7 +546,6 @@ class AnalisadorSintatico(AnalisadorLexico):
 			self.prox_token()
 			return "null"
 
-
 	''' creator ::= (basicType | qualifiedIdentifier)
 			( arguments
 			| [ ] {[ ]} [arrayInitializer]
@@ -511,12 +571,25 @@ class AnalisadorSintatico(AnalisadorLexico):
 			| ;
 			| statementExpression ; '''
 	def statement(self):
-		if "while" in self.tokens[self.i]:
-			print("here")
+		if "{" in self.tokens[self.i]:
+			self.block()
 		elif "if" in self.tokens[self.i]:
-			pass
+			self.prox_token()
+			self.par_expression()
+			self.statement()
+			if "else" in self.tokens[self.i]:
+				self.prox_token()
+				self.statement()
+		elif "while" in self.tokens[self.i]:
+			self.prox_token()
+			self.par_expression()
+			self.statement()
 		elif "return" in self.tokens[self.i]:
-			pass
+			self.prox_token()
+			if ";" in self.tokens[self.i]:
+				self.prox_token()
+			else:
+				self.expression()
 		elif ";" in self.tokens[self.i]:
 			self.prox_token()
 		else:
