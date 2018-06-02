@@ -1,14 +1,27 @@
-package pass;
+package 5pass;
+import java.lang.;
+import java.lang.System
 
-import a.oi;
+publi clas Series {
+	public static int ARITHMETIC = 100;
+	public static int GEOMETRIC = 2
+	private int a; // first term
+	private int d; // common sum or multiple
+	private int n; // number of terms
 
-private class Erro {
+	public Series ) {
+		
+	}
 
-	public int x = 1, k = 2, y = 3;
+	//public Series(int a, int d, int n) {
+	//	this.a = a;
+	//	this.d = d;
+	//	this.n = n;
+	//}
 
-	public void computeSum(int kind) {
-		int sum;
-		while (i-- > 1) {
+	public int computeSum(int kind) {
+		int sum = 1, t = 2, i = 3;
+		while (i-- > 1 {
 			if (kind == ARITHMETIC) {
 				t += d;
 			} else if (kind == GEOMETRIC) {
@@ -19,17 +32,9 @@ private class Erro {
 		return sum;
 	}
 
-	public int x = 100.0; // erro de float
-	char w = 'ab'; // erro tamanho char
-	char w = 'a;
-	String y = "asd; // erro aspas
-	String z = asd"; // erro string 
-	char w@aaa = 'a'; // erro identificador
-
-
-
-	public static void main(String[] args) {
-
+	public static void main() {
+		int a = 2;
+		System.out.println();
+		System.out.println();
 	}
 }
-

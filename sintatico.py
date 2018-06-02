@@ -48,10 +48,13 @@ class AnalisadorSintatico(AnalisadorLexico):
 				if ";" in self.tokens[self.i]:
 					self.prox_token()
 				else:
+					self.ant_token()
 					sys.stderr.write("Erro sintatico: faltando ;, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
-
+					self.prox_token()
 			else:
-				sys.stderr.write("Erro sintatico: declare um package, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
+				sys.stderr.write("Erro sintatico: package invalido, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
+				while "import" not in self.tokens[self.i]:
+					self.prox_token()
 
 		# {import qualifiedIdentifier ;}
 		while True:
@@ -62,11 +65,13 @@ class AnalisadorSintatico(AnalisadorLexico):
 					if ";" in self.tokens[self.i]:
 						self.prox_token()
 					else:
+						self.ant_token()
 						sys.stderr.write("Erro sintatico: faltando ;, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
-						break
+						self.prox_token()
 				else:
 					sys.stderr.write("Erro sintatico: import invalido, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
-					break
+					#while ("public" not in self.tokens[self.i]) or ("protected" not in self.tokens[self.i]) or ("private" not in self.tokens[self.i]):
+					#	self.prox_token()
 			else:
 				break
 				
@@ -87,7 +92,7 @@ class AnalisadorSintatico(AnalisadorLexico):
 					self.prox_token()
 				else:
 					sys.stderr.write("Erro sintatico: " +tipo+ " invalido, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
-					break
+
 			else:
 				break
 
@@ -119,7 +124,7 @@ class AnalisadorSintatico(AnalisadorLexico):
 				else:
 					break
 		else:
-			sys.stderr.write("Erro sintatico: tipo invalido, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
+			sys.stderr.write("Erro sintatico: modificador invalido, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
 			self.prox_token()
 		return mods
 
@@ -141,7 +146,10 @@ class AnalisadorSintatico(AnalisadorLexico):
 			else:
 				sys.stderr.write("Erro sintatico: class invalida, linha:%s col:%s\n" % (str(self.linha), str(self.coluna))) 
 		else:
-			sys.stderr.write("Erro sintatico: class invalida, linha:%s col:%s\n" % (str(self.linha), str(self.coluna))) 
+			sys.stderr.write("Erro sintatico: class invalida, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
+			while "{" not in self.tokens[self.i]:
+				self.prox_token()
+			self.class_body()
 
 	# classBody ::= { {modifiers memberDecl} } 
 	def class_body(self):
@@ -151,8 +159,8 @@ class AnalisadorSintatico(AnalisadorLexico):
 				mods = self.modifiers()
 				self.member_decl(mods)
 			if "}" in self.tokens[self.i]:
-				#self.prox_token()
-				pass
+				if self.i < len(self.tokens)-1:
+					self.prox_token()
 			else:
 				sys.stderr.write("Erro sintatico: faltou }, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))			
 		else:
@@ -194,7 +202,9 @@ class AnalisadorSintatico(AnalisadorLexico):
 			if ";" in self.tokens[self.i]:
 				self.prox_token()
 			else:
+				self.ant_token()
 				sys.stderr.write("Erro sintatico: faltou ;, linha:%s col:%s\n" % (str(self.linha), str(self.coluna))) 	
+				self.prox_token()
 		else:
 			sys.stderr.write("Erro sintatico: identificador invalido, linha:%s col:%s\n" % (str(self.linha), str(self.coluna))) 
 		
@@ -223,7 +233,9 @@ class AnalisadorSintatico(AnalisadorLexico):
 					if ")" in self.tokens[self.i]:
 						self.prox_token()
 		else:
-			sys.stderr.write("Erro sintatico: faltou (, linha:%s col:%s\n" % (str(self.linha), str(self.coluna))) 
+			sys.stderr.write("Erro sintatico: faltou ( ou ), linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
+			while "{" not in self.tokens[self.i]:
+				self.prox_token()  
 
 	# formalParameter ::= type <identifier>
 	def formal_parameter(self):
@@ -284,7 +296,8 @@ class AnalisadorSintatico(AnalisadorLexico):
 			while "}" not in self.tokens[self.i]:
 				self.block_statement()
 			if "}" in self.tokens[self.i]:
-				self.prox_token()
+				if self.i < len(self.tokens)-1:
+					self.prox_token()
 			else:
 				sys.stderr.write("Erro sintatico: faltou }, linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))	
 		else:
@@ -503,9 +516,14 @@ class AnalisadorSintatico(AnalisadorLexico):
 	def par_expression(self):
 		if "(" in self.tokens[self.i]:
 			self.prox_token()
-			self.expression()
+			inicial = self.expression()
+			id = self.conteudo_id()
+			self.add_tab_simbs(id, inicial)
 			if ")" in self.tokens[self.i]:
 				self.prox_token()
+			else:
+				sys.stderr.write("Erro sintatico: faltando ), linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
+
 
 	# arguments ::= ( [expression {, expression}] )
 	def arguments(self):
