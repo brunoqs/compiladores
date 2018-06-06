@@ -76,7 +76,8 @@ class AnalisadorSintatico(AnalisadorLexico):
 				break
 				
 		# {typeDeclaration} obs: falta loop
-		self.type_declaration()
+		while "}" not in self.tokens[self.i-1]:
+			self.type_declaration()
 
 	# qualifiedIdentifier ::= <identifier> {. <identifier>}
 	def qualified_identifier(self, tipo=""):
@@ -95,6 +96,7 @@ class AnalisadorSintatico(AnalisadorLexico):
 
 			else:
 				break
+		return self.conteudo_token()
 
 	# typeDeclaration ::= modifiers classDeclaration
 	def type_declaration(self):
@@ -249,8 +251,7 @@ class AnalisadorSintatico(AnalisadorLexico):
 
 	# type ::= referenceType | basicType obs:falta implementaçao
 	def type(self):
-		# verifica 1 token a frente se tem []
-		if "[" in self.tokens[self.i+1]:
+		if ("int" not in self.tokens[self.i]) and ("char" not in self.tokens[self.i]) and ("boolean" not in self.tokens[self.i]):
 			tipo = self.reference_type()
 		else:
 			tipo = self.basic_type()
@@ -259,8 +260,9 @@ class AnalisadorSintatico(AnalisadorLexico):
 	''' referenceType ::= basicType [ ] {[ ]}
 				| qualifiedIdentifier {[ ]} obs:falta analisar qualified_identifier e loop''' 
 	def reference_type(self):
-		if self.tokens[self.i+1] == ".":
-			self.qualified_identifier()
+		# essa comparação nao adiantou ainda por causa do memberdecl
+		if (("int" not in self.tokens[self.i]) and ("char" not in self.tokens[self.i]) and ("boolean" not in self.tokens[self.i])):
+			tipo = self.qualified_identifier()
 		else:
 			tipo = self.basic_type()
 			if "[" in self.tokens[self.i]:
@@ -506,6 +508,7 @@ class AnalisadorSintatico(AnalisadorLexico):
 		elif "super" in self.tokens[self.i]:
 			pass
 		elif "new" in self.tokens[self.i]:
+			self.prox_token()
 			self.creator()
 		elif "id" in self.tokens[self.i] and "_" in self.tokens[self.i]:
 			self.qualified_identifier()
@@ -567,9 +570,22 @@ class AnalisadorSintatico(AnalisadorLexico):
 	''' creator ::= (basicType | qualifiedIdentifier)
 			( arguments
 			| [ ] {[ ]} [arrayInitializer]
-			| newArrayDeclarator '''
+			| newArrayDeclarator ) '''
 	def creator(self):
-		pass
+		if (("int" in self.tokens[self.i]) or ("char" in self.tokens[self.i]) or ("boolean" in self.tokens[self.i])):
+			id = self.conteudo_id()
+			tipo = self.conteudo_token()
+			self.add_tab_simbs(id, tipo)
+			self.basic_type()
+		else:
+			self.qualified_identifier("new")
+			if "(" in self.tokens[self.i]:
+				self.prox_token()
+				if ")" in self.tokens[self.i]: 
+					self.prox_token()
+				else:
+					sys.stderr.write("Erro sintatico: faltando ), linha:%s col:%s\n" % (str(self.linha), str(self.coluna)))
+
 
 	# newArrayDeclarator ::= [ expression ] {[ expression ]} {[ ]}
 	def new_array_declarator(self):

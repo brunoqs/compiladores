@@ -13,12 +13,6 @@ public class Series {
 		
 	}
 
-	//public Series(int a, int d, int n) {
-	//	this.a = a;
-	//	this.d = d;
-	//	this.n = n;
-	//}
-
 	public int computeSum(int kind) {
 		int sum = 1, t = 2, i = 3;
 		while (i-- > 1) {
@@ -29,12 +23,12 @@ public class Series {
 			}
 			sum += t;
 		}
-		return sum
+		return sum;
 	}
 
 	public static void main() {
-		int a = Integer.parseInt();
-		System.out.println();
-		System.out.println();
+		Series aux = new Series();
+		int x = 10;
+		aux.computeSum(x);
 	}
 }
